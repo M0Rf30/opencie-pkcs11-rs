@@ -1,0 +1,17 @@
+[package]
+name = "opencie-pkcs11"
+version = "0.2.0"
+edition = "2021"
+description = "Rust bindings for libopencie-pkcs11 — PKCS#11 interface for the Italian CIE smart card"
+license = "MPL-2.0"
+repository = "https://github.com/M0Rf30/opencie-pkcs11-rs"
+keywords = ["pkcs11", "cie", "smartcard", "ffi"]
+categories = ["cryptography", "external-ffi-bindings"]
+
+[dependencies]
+
+[build-dependencies]
+bindgen = "0.69"
+
+[lib]
+name = "opencie_pkcs11"
