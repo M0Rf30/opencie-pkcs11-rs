@@ -16,6 +16,42 @@ use crate::pkcs11::{Error, Result};
 use std::ffi::{CStr, CString};
 use std::os::raw::c_int;
 
+/// Semantic classification of a CIE card failure, derived from the ISO 7816
+/// status word returned by the card.
+#[repr(u32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ErrorKind {
+    None = 0,
+    WrongPin = 1,
+    PinBlocked = 2,
+    PinNotSet = 3,
+    SecurityNotSatisfied = 4,
+    FileNotFound = 5,
+    WrongParams = 6,
+    InsNotSupported = 7,
+    CardCommunication = 8,
+    Unknown = 9,
+}
+
+impl From<cie_ffi::cie_error_kind> for ErrorKind {
+    fn from(raw: cie_ffi::cie_error_kind) -> Self {
+        match raw {
+            cie_ffi::cie_error_kind_CIE_ERR_NONE => ErrorKind::None,
+            cie_ffi::cie_error_kind_CIE_ERR_WRONG_PIN => ErrorKind::WrongPin,
+            cie_ffi::cie_error_kind_CIE_ERR_PIN_BLOCKED => ErrorKind::PinBlocked,
+            cie_ffi::cie_error_kind_CIE_ERR_PIN_NOT_SET => ErrorKind::PinNotSet,
+            cie_ffi::cie_error_kind_CIE_ERR_SECURITY_NOT_SATISFIED => {
+                ErrorKind::SecurityNotSatisfied
+            }
+            cie_ffi::cie_error_kind_CIE_ERR_FILE_NOT_FOUND => ErrorKind::FileNotFound,
+            cie_ffi::cie_error_kind_CIE_ERR_WRONG_PARAMS => ErrorKind::WrongParams,
+            cie_ffi::cie_error_kind_CIE_ERR_INS_NOT_SUPPORTED => ErrorKind::InsNotSupported,
+            cie_ffi::cie_error_kind_CIE_ERR_CARD_COMMUNICATION => ErrorKind::CardCommunication,
+            _ => ErrorKind::Unknown,
+        }
+    }
+}
+
 /// Threshold separating "small positive count" from "PKCS#11 error code".
 /// PKCS#11 error codes occupy the upper part of the `CK_RV` (unsigned long)
 /// range; signature counts are always small. 0x1000 is well above any
@@ -277,4 +313,23 @@ pub fn make_digest_info(algid: i32, digest: &[u8]) -> Result<Vec<u8>> {
     }
     out.truncate(out_len);
     Ok(out)
+}
+
+/// Classify an ISO 7816 status word. Pure function, no card required.
+pub fn classify_sw(sw: u16) -> ErrorKind {
+    ErrorKind::from(unsafe { cie_ffi::cie_classify_sw(sw) })
+}
+
+/// Detail for the most recent failed cie_* call on the CALLING THREAD.
+///
+/// Returns a tuple of (ErrorKind, status_word). The error record is
+/// thread-local and reports only the most recent failure on this thread.
+/// A successful call resets the record to (None, 0).
+pub fn last_error() -> (ErrorKind, u16) {
+    let mut kind: cie_ffi::cie_error_kind = 0;
+    let mut sw: u16 = 0;
+    unsafe {
+        cie_ffi::cie_last_error(&mut kind, &mut sw);
+    }
+    (ErrorKind::from(kind), sw)
 }
