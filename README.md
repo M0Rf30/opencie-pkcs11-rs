@@ -20,7 +20,7 @@ opencie-pkcs11 = "0.2"
 
 ### Runtime
 
-- `libopencie-pkcs11` shared library installed on the target system. Install from the upstream [releases](https://github.com/M0Rf30/opencie-pkcs11/releases) or build from source with [Meson](https://github.com/M0Rf30/opencie-pkcs11#building).
+- `libopencie-pkcs11` **1.0.12 or newer** installed on the target system. Install from the upstream [releases](https://github.com/M0Rf30/opencie-pkcs11/releases) or build from source with [Meson](https://github.com/M0Rf30/opencie-pkcs11#building). Earlier versions do not export `cie_classify_sw`/`cie_last_error` and will fail to build.
 
 ### Build
 
