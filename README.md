@@ -20,7 +20,7 @@ opencie-pkcs11 = "0.2"
 
 ### Runtime
 
-- `libopencie-pkcs11` **1.0.12 or newer** installed on the target system. Install from the upstream [releases](https://github.com/M0Rf30/opencie-pkcs11/releases) or build from source with [Meson](https://github.com/M0Rf30/opencie-pkcs11#building). Earlier versions do not export `cie_classify_sw`/`cie_last_error` and will fail to build.
+- `libopencie-pkcs11` **1.0.15 or newer** installed on the target system. Install from the upstream [releases](https://github.com/M0Rf30/opencie-pkcs11/releases) or build from source with [Meson](https://github.com/M0Rf30/opencie-pkcs11#building). Earlier versions do not export `cie_classify_sw`/`cie_last_error` and will fail to build; versions before 1.0.15 also fail to recognize cards paired only through the official CIE ID app.
 
 ### Build
 
@@ -153,6 +153,13 @@ match pkcs11::initialize() {
 Progress, completion, and sign-completion callbacks defined in `cie_ext.h` are not yet exposed; the safe wrappers pass `NULL`. The raw `cie_ffi` module provides the typedefs for callers that need them today.
 
 ## Changelog
+
+### 0.3.1
+
+- Documented that `cie::is_enabled` also reports cards paired only through the
+  official IPZS CIE ID app as enabled when inserted (upstream 1.0.15+
+  behaviour; see [opencie-pkcs11#25](https://github.com/M0Rf30/opencie-pkcs11/issues/25)).
+- Raised the minimum supported `libopencie-pkcs11` version to 1.0.15.
 
 ### 0.2.0
 

@@ -93,7 +93,11 @@ pub fn enable(pan: &str, pin: &str) -> Result<()> {
     }
 }
 
-/// Return `true` if the card identified by PAN is currently enrolled.
+/// Return `true` if the card identified by PAN is currently enrolled in the
+/// local cache (`~/.CIEPKI`), or if a card with that PAN is inserted right
+/// now (checked directly on the card, no PIN required). This means cards
+/// paired only through the official IPZS CIE ID app — which never populate
+/// the local cache — are still reported as enabled while present.
 pub fn is_enabled(pan: &str) -> bool {
     let Ok(c_pan) = CString::new(pan) else {
         return false;
