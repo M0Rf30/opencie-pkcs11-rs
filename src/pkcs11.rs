@@ -68,6 +68,8 @@ pub fn get_slot_list(token_present: bool) -> Result<Vec<ffi::CK_SLOT_ID>> {
 }
 
 /// Open a session on the specified slot
+///
+/// `flags` must include `CKF_SERIAL_SESSION`, as required by PKCS#11.
 pub fn open_session(
     slot_id: ffi::CK_SLOT_ID,
     flags: ffi::CK_FLAGS,
@@ -248,6 +250,9 @@ pub fn sign_final(session: ffi::CK_SESSION_HANDLE) -> Result<Vec<u8>> {
 }
 
 /// Initialize decryption operation
+///
+/// The CIE is signing-only: `libopencie-pkcs11` answers
+/// `CKR_FUNCTION_NOT_SUPPORTED`.
 pub fn decrypt_init(
     session: ffi::CK_SESSION_HANDLE,
     mechanism: &ffi::CK_MECHANISM,
@@ -264,6 +269,9 @@ pub fn decrypt_init(
 }
 
 /// Decrypt data in a single operation
+///
+/// The CIE is signing-only: `libopencie-pkcs11` answers
+/// `CKR_FUNCTION_NOT_SUPPORTED`.
 pub fn decrypt(session: ffi::CK_SESSION_HANDLE, encrypted_data: &[u8]) -> Result<Vec<u8>> {
     unsafe {
         let mut data_len: ffi::CK_ULONG = 0;
@@ -292,6 +300,9 @@ pub fn decrypt(session: ffi::CK_SESSION_HANDLE, encrypted_data: &[u8]) -> Result
 }
 
 /// Initialize encryption operation
+///
+/// The CIE is signing-only: `libopencie-pkcs11` answers
+/// `CKR_FUNCTION_NOT_SUPPORTED`.
 pub fn encrypt_init(
     session: ffi::CK_SESSION_HANDLE,
     mechanism: &ffi::CK_MECHANISM,
@@ -308,6 +319,9 @@ pub fn encrypt_init(
 }
 
 /// Encrypt data in a single operation
+///
+/// The CIE is signing-only: `libopencie-pkcs11` answers
+/// `CKR_FUNCTION_NOT_SUPPORTED`.
 pub fn encrypt(session: ffi::CK_SESSION_HANDLE, data: &[u8]) -> Result<Vec<u8>> {
     unsafe {
         let mut encrypted_len: ffi::CK_ULONG = 0;
@@ -342,5 +356,39 @@ pub fn generate_random(session: ffi::CK_SESSION_HANDLE, length: usize) -> Result
         let rv = ffi::C_GenerateRandom(session, random_data.as_mut_ptr(), length as ffi::CK_ULONG);
         rv_to_result(rv)?;
         Ok(random_data)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rv_to_result_maps_ok_and_errors() {
+        assert_eq!(rv_to_result(0), Ok(()));
+        assert_eq!(
+            rv_to_result(ffi::CKR_PIN_INCORRECT as ffi::CK_RV),
+            Err(Error(0xA0))
+        );
+    }
+
+    #[test]
+    fn error_display_is_hex() {
+        assert_eq!(Error(0xA0).to_string(), "PKCS#11 error: 0x000000a0");
+        assert_eq!(Error(0x8400_0001).to_string(), "PKCS#11 error: 0x84000001");
+    }
+
+    #[test]
+    fn ck_types_follow_the_c_unsigned_long() {
+        // CK_RV / CK_ULONG are C `unsigned long` (32-bit on Windows, 64-bit
+        // on LP64): the bindings must follow the C type, not u32/u64.
+        assert_eq!(
+            std::mem::size_of::<ffi::CK_RV>(),
+            std::mem::size_of::<std::os::raw::c_ulong>()
+        );
+        assert_eq!(
+            std::mem::size_of::<ffi::CK_ULONG>(),
+            std::mem::size_of::<std::os::raw::c_ulong>()
+        );
     }
 }
