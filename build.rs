@@ -39,6 +39,22 @@ fn main() {
         .expect("Couldn't write PKCS#11 bindings");
 
     println!("cargo:rerun-if-changed={}", cie_ext_header);
+
+    // These bindings target libopencie-pkcs11 1.3.0 or newer. Fail early with
+    // an actionable message when pointed at an older checkout instead of
+    // emitting bindings that miss symbols used by the safe wrappers.
+    let header_text = std::fs::read_to_string(&cie_ext_header)
+        .unwrap_or_else(|e| panic!("cannot read {}: {}", cie_ext_header, e));
+    for required in ["cie_read_dgs_can", "CIE_ERR_WRONG_CAN"] {
+        assert!(
+            header_text.contains(required),
+            "{} does not declare `{}`: opencie-pkcs11 bindings require \
+             libopencie-pkcs11 1.3.0 or newer (set OPENCIE_PKCS11_DIR to a \
+             1.3.0+ checkout)",
+            cie_ext_header,
+            required
+        );
+    }
     bindgen::Builder::default()
         .header(&cie_ext_header)
         .clang_args(&clang_args)
