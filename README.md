@@ -209,7 +209,7 @@ Completion callbacks are not exposed (the wrappers return the final result). The
 
 ## Changelog
 
-### Unreleased
+### 0.4.0
 
 - Target `libopencie-pkcs11` 1.3.0 (minimum version raised from 1.0.15). `build.rs` rejects older headers.
 - Added `cie::read_dgs_can` (PACE with the 6-digit CAN), `cie::read_dgs` (PIN fallback), `cie::can_failure` / `cie::classify_can_failure`, `cie::get_certificate` (buffer released with `cie_free`) and `cie::timestamp`.
